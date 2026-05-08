@@ -1,69 +1,502 @@
-# OpenTibiaBR - Canary
+# Canary no Arch Linux (GCC 15/16)
 
-[![Discord Channel](https://img.shields.io/discord/528117503952551936.svg?style=flat-square&logo=discord)](https://discord.gg/gvTj5sh9Mp)
-[![CI](https://github.com/opentibiabr/canary/actions/workflows/ci.yml/badge.svg)](https://github.com/opentibiabr/canary/actions/workflows/ci.yml)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=opentibiabr_canary&metric=alert_status)](https://sonarcloud.io/dashboard?id=opentibiabr_canary)
-![GitHub repo size](https://img.shields.io/github/repo-size/opentibiabr/canary)
-[![GitHub license](https://img.shields.io/github/license/opentibiabr/canary.svg)](https://github.com/opentibiabr/canary/blob/main/LICENSE)
+Documentação do processo necessário para buildar, compilar e executar o Canary no Arch Linux moderno.
 
-OpenTibiaBR - Canary is a free and open-source MMORPG server emulator written in C++. It is a fork of the [OTServBR-Global](https://github.com/opentibiabr/otservbr-global) project. To connect to the server and to take a stable experience, you can use [mehah's otclient](https://github.com/mehah/otclient)
-or [tibia client](https://github.com/dudantas/tibia-client/releases/latest) and if you want to edit something, check
-our [customized tools](https://docs.opentibiabr.com/opentibiabr/downloads/tools). If you want to edit the map, use our own [remere's map editor](https://github.com/opentibiabr/remeres-map-editor/).
+---
 
-## Getting Started
+# Ambiente
 
-- [Gitbook](https://docs.opentibiabr.com/opentibiabr/projects/canary).
-- [Wiki](https://github.com/opentibiabr/canary/wiki).
-- [Crypto backend evaluation](docs/crypto-backend-evaluation.md).
+## Sistema
 
-## Running Tests
+- Arch Linux
+- GCC 15/16
+- CMake + Ninja
+- MariaDB
 
-Tests can be run directly from the repository root using CMake test presets:
+---
+
+# Dependências Instaladas
+
+## Dependências principais
 
 ```bash
-# Configure and build tests for your platform
-cmake --preset linux-debug && cmake --build --preset linux-debug
-
-# Run all tests
-ctest --preset linux-debug
-
-# For other platforms use:
-# ctest --preset macos-debug
-# ctest --preset windows-debug
+sudo pacman -S \
+    git \
+    cmake \
+    ninja \
+    gcc \
+    boost \
+    curl \
+    openssl \
+    fmt \
+    spdlog \
+    protobuf \
+    protobuf-c \
+    luajit \
+    zlib \
+    mariadb-libs \
+    mariadb \
+    nlohmann-json \
+    asio \
+    pugixml \
+    argon2 \
+    parallel-hashmap \
+    benchmark \
+    gtest
 ```
 
-For detailed testing information including adding tests and framework usage, see [tests/README.md](tests/README.md).
+---
 
-## Support
+# Dependências Header-Only / Manuais
 
-If you need help, please visit our [discord](https://discord.gg/gvTj5sh9Mp). Our issue tracker is not a support forum, and using it as one will result in your issue being closed.
+Algumas bibliotecas não foram encontradas automaticamente pelo CMake no Arch Linux moderno.
 
-## Contributing
+Foi necessário clonar/copiar manualmente.
 
-Here are some ways you can contribute:
+---
 
-- [Issue Tracker](https://github.com/opentibiabr/canary/issues/new/choose).
-- [Pull Request](https://github.com/opentibiabr/canary/pulls).
+## Obfuscate
 
-You are subject to our code of conduct, read at [this link](https://github.com/opentibiabr/canary/blob/main/CODE_OF_CONDUCT.md).
+```bash
+git clone https://github.com/adamyaxley/Obfuscate.git
 
-## Special Thanks
+sudo cp Obfuscate/obfuscate.h /usr/include/
+```
 
-- Our contributors ([Canary](https://github.com/opentibiabr/canary/graphs/contributors) | [OTServBR-Global](https://github.com/opentibiabr/otservbr-global/graphs/contributors)).
+---
 
-## Sponsors
+## stduuid
 
-See our [donate page](https://docs.opentibiabr.com/home/donate).
+```bash
+git clone https://github.com/mariusbancila/stduuid.git
 
-## Project supported by JetBrains
+sudo mkdir -p /usr/include/stduuid
 
-We extend our heartfelt gratitude to Jetbrains for generously granting us licenses to collaborate on this and various
-other open-source initiatives.
+sudo cp stduuid/include/uuid.h /usr/include/stduuid/
+```
 
-<a href="https://jb.gg/OpenSourceSupport/?from=https://github.com/opentibiabr/canary/">
-  <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.svg" alt="JetBrains" width="150" />
-</a>
+---
 
-## Partners
+## cppcodec
 
-[![Supported by OTServ Brasil](https://raw.githubusercontent.com/otbr/otserv-brasil/main/otbr.png)](https://forums.otserv.com.br)
+```bash
+git clone https://github.com/tplgy/cppcodec.git
+
+sudo cp -r cppcodec/cppcodec /usr/include/
+```
+
+---
+
+## utfcpp
+
+```bash
+git clone https://github.com/nemtrif/utfcpp.git
+
+sudo cp -r utfcpp/source/utf8 /usr/include/
+```
+
+---
+
+# Ajustes no CMake
+
+---
+
+## CURL
+
+Alterar:
+
+```cmake
+find_package(CURL CONFIG REQUIRED)
+```
+
+para:
+
+```cmake
+find_package(CURL REQUIRED)
+```
+
+---
+
+## MbedTLS
+
+Alterar:
+
+```cmake
+find_package(MbedTLS CONFIG REQUIRED)
+```
+
+para:
+
+```cmake
+find_package(MbedTLS REQUIRED)
+```
+
+---
+
+## asio
+
+O Arch Linux instala o Asio sem configuração CMake moderna.
+
+Foi necessário substituir:
+
+```cmake
+find_package(asio CONFIG REQUIRED)
+```
+
+por:
+
+```cmake
+include_directories(/usr/include)
+```
+
+E criar target fake:
+
+```cmake
+add_library(asio INTERFACE)
+
+target_include_directories(asio INTERFACE /usr/include)
+
+add_library(asio::asio ALIAS asio)
+```
+
+---
+
+## eventpp
+
+Foi necessário criar target fake:
+
+```cmake
+add_library(eventpp INTERFACE)
+
+target_include_directories(eventpp INTERFACE /usr/include)
+
+add_library(eventpp::eventpp ALIAS eventpp)
+```
+
+---
+
+## magic_enum
+
+Mesmo procedimento:
+
+```cmake
+add_library(magic_enum INTERFACE)
+
+target_include_directories(magic_enum INTERFACE /usr/include)
+
+add_library(magic_enum::magic_enum ALIAS magic_enum)
+```
+
+---
+
+## mio
+
+Mesmo procedimento:
+
+```cmake
+add_library(mio INTERFACE)
+
+target_include_directories(mio INTERFACE /usr/include)
+
+add_library(mio::mio ALIAS mio)
+```
+
+---
+
+## argon2
+
+Substituir:
+
+```cmake
+find_package(unofficial-argon2 CONFIG REQUIRED)
+```
+
+por:
+
+```cmake
+include_directories(/usr/include)
+```
+
+E criar target fake:
+
+```cmake
+add_library(argon2 INTERFACE)
+
+target_include_directories(argon2 INTERFACE /usr/include)
+
+add_library(unofficial::argon2::libargon2 ALIAS argon2)
+```
+
+---
+
+## MariaDB
+
+Substituir:
+
+```cmake
+find_package(unofficial-libmariadb CONFIG REQUIRED)
+```
+
+por:
+
+```cmake
+include_directories(/usr/include/mysql)
+link_directories(/usr/lib)
+```
+
+Criar target fake:
+
+```cmake
+add_library(libmariadb INTERFACE)
+
+target_link_libraries(libmariadb INTERFACE mariadb)
+
+add_library(unofficial::libmariadb ALIAS libmariadb)
+```
+
+---
+
+# BOOST_DI_INCLUDE_DIRS
+
+Erro resolvido definindo:
+
+```cmake
+set(BOOST_DI_INCLUDE_DIRS "/usr/include")
+```
+
+---
+
+# Compatibilidade Asio Moderno
+
+O projeto foi escrito para versão antiga do Asio.
+
+Diversas APIs mudaram.
+
+---
+
+## io_service -> io_context
+
+Criar arquivo:
+
+```bash
+sudo nano /usr/include/asio/io_service.hpp
+```
+
+Conteúdo:
+
+```cpp
+#pragma once
+
+#include <asio/io_context.hpp>
+
+namespace asio {
+    using io_service = io_context;
+}
+```
+
+---
+
+## expires_from_now -> expires_after
+
+Substituir no código:
+
+```cpp
+expires_from_now
+```
+
+por:
+
+```cpp
+expires_after
+```
+
+---
+
+## address_v4::from_string -> make_address_v4
+
+Substituir:
+
+```cpp
+address_v4::from_string
+```
+
+por:
+
+```cpp
+make_address_v4
+```
+
+---
+
+## to_ulong -> to_uint
+
+Substituir:
+
+```cpp
+to_ulong()
+```
+
+por:
+
+```cpp
+to_uint()
+```
+
+---
+
+## cancel(ec) -> cancel()
+
+Substituir:
+
+```cpp
+cancel(ec)
+```
+
+por:
+
+```cpp
+cancel()
+```
+
+---
+
+## resolver::iterator
+
+Substituir:
+
+```cpp
+asio::ip::tcp::resolver::iterator
+```
+
+por:
+
+```cpp
+asio::ip::tcp::resolver::results_type::iterator
+```
+
+---
+
+## endpoint resolver moderno
+
+Substituir:
+
+```cpp
+endpoint = asio::ip::tcp::endpoint(*results);
+```
+
+por:
+
+```cpp
+endpoint = *results.begin();
+```
+
+---
+
+# Build
+
+---
+
+## Criar diretório
+
+```bash
+mkdir build
+cd build
+```
+
+---
+
+## Gerar build
+
+```bash
+cmake -G Ninja ..
+```
+
+---
+
+## Compilar
+
+```bash
+ninja -j$(nproc)
+```
+
+---
+
+# Banco de Dados
+
+---
+
+## Criar database
+
+```sql
+CREATE DATABASE canary;
+```
+
+---
+
+## Criar usuário
+
+```sql
+CREATE USER 'canary'@'localhost' IDENTIFIED BY 'senha';
+GRANT ALL PRIVILEGES ON canary.* TO 'canary'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+---
+
+# Importar schema
+
+```bash
+mysql -u canary -p canary < schema.sql
+```
+
+---
+
+# Executar servidor
+
+```bash
+./canary
+```
+
+---
+
+# Resultado Esperado
+
+```txt
+OTServBR-Global server online!
+```
+
+---
+
+# Observações
+
+- O projeto compila e executa corretamente no Arch Linux moderno.
+- Diversas incompatibilidades existem devido ao uso de Asio antigo.
+- O build foi validado após limpeza completa da pasta `build`.
+- O projeto não depende mais dos diretórios temporários clonados na home.
+
+---
+
+# Rebuild Limpo
+
+Teste validado com:
+
+```bash
+rm -rf build
+
+mkdir build
+cd build
+
+cmake -G Ninja ..
+
+ninja -j$(nproc)
+```
+
+---
+
+# Repositório Fork
+
+Fork recomendado para preservar patches:
+
+```txt
+canary-archlinux
+```
