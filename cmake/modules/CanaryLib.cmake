@@ -104,6 +104,7 @@ foreach(
                absl::log
                absl::base
                absl::bits
+               absl_log_internal_check_op
                asio::asio
                eventpp::eventpp
                fmt::fmt

@@ -33,14 +33,13 @@ set(CMAKE_VERBOSE_MAKEFILE
 # *****************************************************************************
 # Packages / Libs
 # *****************************************************************************
+include_directories(/usr/include)
 find_package(
     CURL
-    CONFIG
     REQUIRED
 )
 find_package(
     MbedTLS
-    CONFIG
     REQUIRED
 )
 find_package(LuaJIT REQUIRED)
@@ -53,21 +52,18 @@ find_package(
     CONFIG
     REQUIRED
 )
-find_package(
-    asio
-    CONFIG
-    REQUIRED
-)
-find_package(
-    eventpp
-    CONFIG
-    REQUIRED
-)
-find_package(
-    magic_enum
-    CONFIG
-    REQUIRED
-)
+# find_package(eventpp CONFIG REQUIRED)
+add_library(eventpp INTERFACE)
+target_include_directories(eventpp INTERFACE /usr/include)
+add_library(eventpp::eventpp ALIAS eventpp)
+# find_package(magic_enum CONFIG REQUIRED)
+add_library(magic_enum INTERFACE)
+target_include_directories(magic_enum INTERFACE /usr/include)
+add_library(magic_enum::magic_enum ALIAS magic_enum)
+
+add_library(asio INTERFACE)
+target_include_directories(asio INTERFACE /usr/include)
+add_library(asio::asio ALIAS asio)
 if(FEATURE_METRICS)
     find_package(
         opentelemetry-cpp
@@ -80,31 +76,41 @@ if(FEATURE_METRICS)
         REQUIRED
     )
 endif()
-find_package(mio REQUIRED)
+# find_package(mio REQUIRED)
+add_library(mio INTERFACE)
+target_include_directories(mio INTERFACE /usr/include)
+add_library(mio::mio ALIAS mio)
+
 find_package(
     pugixml
     CONFIG
     REQUIRED
 )
 find_package(spdlog REQUIRED)
-find_package(
-    unofficial-argon2
-    CONFIG
-    REQUIRED
+# find_package(argon2 REQUIRED)
+add_library(argon2 SHARED IMPORTED)
+set_target_properties(argon2 PROPERTIES
+    IMPORTED_LOCATION "/usr/lib/libargon2.so"
+    INTERFACE_INCLUDE_DIRECTORIES "/usr/include"
 )
-find_package(
-    unofficial-libmariadb
-    CONFIG
-    REQUIRED
-)
-find_package(
-    nlohmann_json
-    CONFIG
-    REQUIRED
+add_library(unofficial::argon2::libargon2 ALIAS argon2)
+
+# find_package(MariaDB REQUIRED)
+add_library(libmariadb SHARED IMPORTED)
+
+set_target_properties(libmariadb PROPERTIES
+    IMPORTED_LOCATION "/usr/lib/libmariadb.so"
+    INTERFACE_INCLUDE_DIRECTORIES "/usr/include/mysql"
 )
 
-find_path(BOOST_DI_INCLUDE_DIRS "boost/di.hpp")
+add_library(unofficial::libmariadb ALIAS libmariadb)
 
+find_package(nlohmann_json REQUIRED)
+
+set(BOOST_DI_INCLUDE_DIRS "/usr/include")
+
+#find_path(BOOST_DI_INCLUDE_DIRS "boost/di.hpp")
+find_path(BOOST_DI_INCLUDE_DIRS "/usr/include")
 # *****************************************************************************
 # Sanity Checks
 # *****************************************************************************

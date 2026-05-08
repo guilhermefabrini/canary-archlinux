@@ -74,6 +74,7 @@
 #include <absl/numeric/int128.h>
 
 // ASIO
+#define ASIO_ENABLE_OLD_SERVICES
 #include <asio.hpp>
 
 // CURL
