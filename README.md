@@ -471,8 +471,6 @@ OTServBR-Global server online!
 
 - O projeto compila e executa corretamente no Arch Linux moderno.
 - Diversas incompatibilidades existem devido ao uso de Asio antigo.
-- O build foi validado após limpeza completa da pasta `build`.
-- O projeto não depende mais dos diretórios temporários clonados na home.
 
 ---
 
